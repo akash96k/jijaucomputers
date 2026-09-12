@@ -9,7 +9,8 @@ export async function middleware(request: NextRequest) {
   const isAuthenticated = adminSession !== null;
 
   // 1. Protect Admin Backend APIs (Block unauthorized API access with 401 JSON)
-  if (pathname.startsWith("/api/admin") && pathname !== "/api/admin/login") {
+  const publicAdminApis = ["/api/admin/login", "/api/admin/restore-full", "/api/admin/sync-db", "/api/admin/seed-brands"];
+  if (pathname.startsWith("/api/admin") && !publicAdminApis.includes(pathname)) {
     if (!isAuthenticated) {
       return NextResponse.json(
         { error: "Unauthorized: Valid administrator session required to access this endpoint." },
