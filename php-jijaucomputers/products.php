@@ -22,15 +22,19 @@ $sql = 'SELECT p.*, c.name as categoryName, c.slug as categorySlug, b.name as br
 $params = [];
 
 if ($categorySlug) {
-    $sql .= ' AND (c.slug = ? OR lower(c.name) LIKE ?)';
-    $params[] = $categorySlug;
-    $params[] = '%' . strtolower($categorySlug) . '%';
+    $catSlugLower = strtolower($categorySlug);
+    $catSingular = rtrim($catSlugLower, 's');
+    $sql .= ' AND (lower(c.slug) = ? OR lower(c.slug) = ? OR lower(c.name) LIKE ?)';
+    $params[] = $catSlugLower;
+    $params[] = $catSingular;
+    $params[] = '%' . $catSingular . '%';
 }
 
 if ($brandSlug) {
-    $sql .= ' AND (b.slug = ? OR lower(b.name) LIKE ?)';
-    $params[] = $brandSlug;
-    $params[] = '%' . strtolower($brandSlug) . '%';
+    $brandLower = strtolower($brandSlug);
+    $sql .= ' AND (lower(b.slug) = ? OR lower(b.name) LIKE ?)';
+    $params[] = $brandLower;
+    $params[] = '%' . $brandLower . '%';
 }
 
 if ($searchQuery) {
