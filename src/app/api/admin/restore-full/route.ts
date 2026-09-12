@@ -154,6 +154,61 @@ export async function GET() {
       }
     }
 
+    // Restore Users
+    if (data.user && data.user.length > 0) {
+      for (const u of data.user) {
+        try {
+          await prisma.user.upsert({
+            where: { email: u.email },
+            update: { name: u.name, phone: u.phone, role: u.role, address: u.address, city: u.city, pincode: u.pincode, isVerified: u.isVerified ?? true },
+            create: { id: u.id, name: u.name, email: u.email, phone: u.phone, password: u.password, role: u.role, address: u.address, city: u.city, pincode: u.pincode, isVerified: u.isVerified ?? true },
+          });
+          report.users = (report.users || 0) + 1;
+        } catch {}
+      }
+    }
+
+    // Restore Orders
+    if (data.order && data.order.length > 0) {
+      for (const ord of data.order) {
+        try {
+          const { items, ...orderData } = ord;
+          const createdOrder = await prisma.order.upsert({
+            where: { orderNumber: ord.orderNumber },
+            update: orderData,
+            create: orderData,
+          });
+
+          if (items && items.length > 0) {
+            for (const item of items) {
+              try {
+                await prisma.orderItem.upsert({
+                  where: { id: item.id },
+                  update: { price: item.price, quantity: item.quantity, total: item.total, name: item.name || item.productName },
+                  create: { id: item.id, orderId: createdOrder.id, productId: item.productId, price: item.price, quantity: item.quantity, total: item.total, name: item.name || item.productName },
+                });
+              } catch {}
+            }
+          }
+          report.orders = (report.orders || 0) + 1;
+        } catch {}
+      }
+    }
+
+    // Restore Service Requests
+    if (data.serviceRequest && data.serviceRequest.length > 0) {
+      for (const srv of data.serviceRequest) {
+        try {
+          await prisma.serviceRequest.upsert({
+            where: { ticketId: srv.ticketId },
+            update: srv,
+            create: srv,
+          });
+          report.serviceRequests = (report.serviceRequests || 0) + 1;
+        } catch {}
+      }
+    }
+
     // Seed brand products to ensure all 16 official brands are complete
     try {
       const { seedBrandProducts } = await import("../../../../../prisma/seed-brand-products");
