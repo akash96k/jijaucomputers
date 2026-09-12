@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ensureHappyCustomerTable } from "@/lib/db-tables";
 
 export const dynamic = "force-dynamic";
 
@@ -20,19 +21,23 @@ export async function GET(req: Request) {
       ];
     }
 
-    const customers = await prisma.happyCustomer.findMany({
-      where,
-      orderBy: [{ createdAt: "desc" }],
-    });
-
-    return NextResponse.json(
-      { success: true, customers },
-      {
-        headers: {
-          "Cache-Control": "no-store, max-age=0",
-        },
+    try {
+      const customers = await prisma.happyCustomer.findMany({
+        where,
+        orderBy: [{ createdAt: "desc" }],
+      });
+      return NextResponse.json({ success: true, customers }, { headers: { "Cache-Control": "no-store, max-age=0" } });
+    } catch (dbErr: any) {
+      if (dbErr?.message?.includes("does not exist") || dbErr?.code === "P2021") {
+        await ensureHappyCustomerTable();
+        const customers = await prisma.happyCustomer.findMany({
+          where,
+          orderBy: [{ createdAt: "desc" }],
+        });
+        return NextResponse.json({ success: true, customers }, { headers: { "Cache-Control": "no-store, max-age=0" } });
       }
-    );
+      throw dbErr;
+    }
   } catch (error) {
     console.error("Admin fetch happy customers error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -65,25 +70,33 @@ export async function POST(req: Request) {
       );
     }
 
-    const customer = await prisma.happyCustomer.create({
-      data: {
-        name: name.trim(),
-        city: city.trim(),
-        village: village ? village.trim() : null,
-        district: district ? district.trim() : "Jalna",
-        phone: phone ? phone.trim() : null,
-        productName: productName.trim(),
-        photoUrl: photoUrl.trim(),
-        review: review ? review.trim() : null,
-        rating: typeof rating === "number" ? rating : 5,
-        purchaseDate: purchaseDate ? purchaseDate.trim() : new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
-        isFeatured: isFeatured ?? true,
-        isActive: isActive ?? true,
-        order: typeof order === "number" ? order : 0,
-      },
-    });
+    const data = {
+      name: name.trim(),
+      city: city.trim(),
+      village: village ? village.trim() : null,
+      district: district ? district.trim() : "Jalna",
+      phone: phone ? phone.trim() : null,
+      productName: productName.trim(),
+      photoUrl: photoUrl.trim(),
+      review: review ? review.trim() : null,
+      rating: typeof rating === "number" ? rating : 5,
+      purchaseDate: purchaseDate ? purchaseDate.trim() : new Date().toLocaleDateString("en-IN", { month: "short", year: "numeric" }),
+      isFeatured: isFeatured ?? true,
+      isActive: isActive ?? true,
+      order: typeof order === "number" ? order : 0,
+    };
 
-    return NextResponse.json({ success: true, customer }, { status: 201 });
+    try {
+      const customer = await prisma.happyCustomer.create({ data });
+      return NextResponse.json({ success: true, customer }, { status: 201 });
+    } catch (dbErr: any) {
+      if (dbErr?.message?.includes("does not exist") || dbErr?.code === "P2021") {
+        await ensureHappyCustomerTable();
+        const customer = await prisma.happyCustomer.create({ data });
+        return NextResponse.json({ success: true, customer }, { status: 201 });
+      }
+      throw dbErr;
+    }
   } catch (error: any) {
     console.error("Admin create happy customer error:", error);
     return NextResponse.json({ error: error?.message || "Internal server error" }, { status: 500 });

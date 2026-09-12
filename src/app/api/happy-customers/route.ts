@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ensureHappyCustomerTable } from "@/lib/db-tables";
 
 export const dynamic = "force-dynamic";
 
@@ -32,35 +33,46 @@ export async function GET(req: Request) {
       ];
     }
 
-    const customers = await prisma.happyCustomer.findMany({
-      where,
-      orderBy: [{ isFeatured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
-    });
+    try {
+      const customers = await prisma.happyCustomer.findMany({
+        where,
+        orderBy: [{ isFeatured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
+      });
 
-    // Get list of unique districts and cities for filters
-    const allActive = await prisma.happyCustomer.findMany({
-      where: { isActive: true },
-      select: { district: true, city: true, village: true },
-    });
+      const allActive = await prisma.happyCustomer.findMany({
+        where: { isActive: true },
+        select: { district: true, city: true, village: true },
+      });
 
-    const districts = Array.from(new Set(allActive.map((c) => c.district).filter(Boolean)));
-    const cities = Array.from(new Set(allActive.map((c) => c.city).filter(Boolean)));
+      const districts = Array.from(new Set(allActive.map((c) => c.district).filter(Boolean)));
+      const cities = Array.from(new Set(allActive.map((c) => c.city).filter(Boolean)));
 
-    return NextResponse.json(
-      {
-        success: true,
-        customers,
-        filters: {
-          districts,
-          cities,
+      return NextResponse.json(
+        {
+          success: true,
+          customers,
+          filters: { districts, cities },
         },
-      },
-      {
-        headers: {
-          "Cache-Control": "no-store, max-age=0",
-        },
+        {
+          headers: { "Cache-Control": "no-store, max-age=0" },
+        }
+      );
+    } catch (dbErr: any) {
+      if (dbErr?.message?.includes("does not exist") || dbErr?.code === "P2021") {
+        await ensureHappyCustomerTable();
+        return NextResponse.json(
+          {
+            success: true,
+            customers: [],
+            filters: { districts: [], cities: [] },
+          },
+          {
+            headers: { "Cache-Control": "no-store, max-age=0" },
+          }
+        );
       }
-    );
+      throw dbErr;
+    }
   } catch (error) {
     console.error("Fetch happy customers error:", error);
     return NextResponse.json(
