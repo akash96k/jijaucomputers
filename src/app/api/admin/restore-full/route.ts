@@ -18,104 +18,143 @@ export async function GET() {
     }
 
     const data = JSON.parse(fs.readFileSync(backupPath, "utf8"));
-    const report: Record<string, number> = {};
+    const report: Record<string, number> = {
+      websiteSettings: 0,
+      adminUsers: 0,
+      categories: 0,
+      brands: 0,
+      products: 0,
+      banners: 0,
+      offers: 0,
+      happyCustomers: 0,
+    };
 
     // Restore Website Settings
     if (data.websiteSetting && data.websiteSetting.length > 0) {
       for (const setting of data.websiteSetting) {
-        await prisma.websiteSetting.upsert({
-          where: { id: setting.id },
-          update: setting,
-          create: setting,
-        });
+        try {
+          await prisma.websiteSetting.upsert({
+            where: { id: setting.id || "default" },
+            update: setting,
+            create: setting,
+          });
+          report.websiteSettings++;
+        } catch {}
       }
-      report.websiteSettings = data.websiteSetting.length;
     }
 
-    // Restore Admin Users
+    // Restore Admin Users (Match by username to prevent Unique Constraint collision)
     if (data.adminUser && data.adminUser.length > 0) {
       for (const admin of data.adminUser) {
-        await prisma.adminUser.upsert({
-          where: { id: admin.id },
-          update: admin,
-          create: admin,
-        });
+        try {
+          await prisma.adminUser.upsert({
+            where: { username: admin.username },
+            update: { name: admin.name, email: admin.email, role: admin.role },
+            create: admin,
+          });
+          report.adminUsers++;
+        } catch {}
       }
-      report.adminUsers = data.adminUser.length;
     }
 
-    // Restore Categories
+    // Restore Categories (Match by slug)
     if (data.category && data.category.length > 0) {
       for (const cat of data.category) {
-        await prisma.category.upsert({
-          where: { id: cat.id },
-          update: cat,
-          create: cat,
-        });
+        try {
+          await prisma.category.upsert({
+            where: { slug: cat.slug },
+            update: { name: cat.name, order: cat.order, description: cat.description, iconName: cat.iconName, imageUrl: cat.imageUrl },
+            create: cat,
+          });
+          report.categories++;
+        } catch {}
       }
-      report.categories = data.category.length;
     }
 
-    // Restore Brands
+    // Restore Brands (Match by slug)
     if (data.brand && data.brand.length > 0) {
       for (const brand of data.brand) {
-        await prisma.brand.upsert({
-          where: { id: brand.id },
-          update: brand,
-          create: brand,
-        });
+        try {
+          await prisma.brand.upsert({
+            where: { slug: brand.slug },
+            update: { name: brand.name, logoUrl: brand.logoUrl, isActive: true },
+            create: brand,
+          });
+          report.brands++;
+        } catch {}
       }
-      report.brands = data.brand.length;
     }
 
-    // Restore Products & Images
+    // Restore Products & Images (Match by slug)
     if (data.product && data.product.length > 0) {
       for (const prod of data.product) {
-        const { images, ...productData } = prod;
-        await prisma.product.upsert({
-          where: { id: prod.id },
-          update: productData,
-          create: productData,
-        });
+        try {
+          const { images, ...productData } = prod;
+          const createdOrUpdated = await prisma.product.upsert({
+            where: { slug: prod.slug },
+            update: productData,
+            create: productData,
+          });
 
-        if (images && images.length > 0) {
-          for (const img of images) {
-            await prisma.productImage.upsert({
-              where: { id: img.id },
-              update: img,
-              create: img,
-            });
+          if (images && images.length > 0) {
+            for (const img of images) {
+              try {
+                await prisma.productImage.upsert({
+                  where: { id: img.id },
+                  update: { url: img.url, isPrimary: img.isPrimary, order: img.order },
+                  create: { id: img.id, url: img.url, isPrimary: img.isPrimary, order: img.order, productId: createdOrUpdated.id },
+                });
+              } catch {}
+            }
           }
-        }
+          report.products++;
+        } catch {}
       }
-      report.products = data.product.length;
     }
 
     // Restore Banners
     if (data.banner && data.banner.length > 0) {
       for (const ban of data.banner) {
-        await prisma.banner.upsert({
-          where: { id: ban.id },
-          update: ban,
-          create: ban,
-        });
+        try {
+          await prisma.banner.upsert({
+            where: { id: ban.id },
+            update: ban,
+            create: ban,
+          });
+          report.banners++;
+        } catch {}
       }
-      report.banners = data.banner.length;
     }
 
     // Restore Offers
     if (data.offer && data.offer.length > 0) {
       for (const off of data.offer) {
-        await prisma.offer.upsert({
-          where: { id: off.id },
-          update: off,
-          create: off,
-        });
+        try {
+          await prisma.offer.upsert({
+            where: { id: off.id },
+            update: off,
+            create: off,
+          });
+          report.offers++;
+        } catch {}
       }
-      report.offers = data.offer.length;
     }
 
-    // Also run seed for brand products to ensure all 16 brands are fully populated
+    // Restore Happy Customers
+    if (data.happyCustomer && data.happyCustomer.length > 0) {
+      for (const cust of data.happyCustomer) {
+        try {
+          await prisma.happyCustomer.upsert({
+            where: { id: cust.id },
+            update: cust,
+            create: cust,
+          });
+          report.happyCustomers++;
+        } catch {}
+      }
+    }
+
+    // Seed brand products to ensure all 16 official brands are complete
     try {
       const { seedBrandProducts } = await import("../../../../../prisma/seed-brand-products");
       await seedBrandProducts();
