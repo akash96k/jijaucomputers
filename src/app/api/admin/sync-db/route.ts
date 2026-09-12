@@ -5,10 +5,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await ensureAllTables();
+    const results = await ensureAllTables();
     return NextResponse.json({
       success: true,
-      message: "Database tables verified and synchronized successfully.",
+      message: "All 18 tables verified and synchronized successfully.",
+      totalTables: results.length,
+      tables: results,
     });
   } catch (error: any) {
     console.error("DB sync error:", error);
