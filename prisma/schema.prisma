@@ -309,6 +309,9 @@ model HappyCustomer {
   id              String   @id @default(cuid())
   name            String
   city            String   @default("Pune")
+  village         String?  @db.Text
+  district        String?  @default("Jalna")
+  phone           String?
   productName     String   @default("Custom PC")
   photoUrl        String?  @db.LongText
   review          String?  @db.Text
