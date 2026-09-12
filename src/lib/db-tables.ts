@@ -1,5 +1,49 @@
 import { prisma } from "./prisma";
 
+export async function ensureUserTable() {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS \`User\` (
+        \`id\` VARCHAR(191) NOT NULL,
+        \`name\` VARCHAR(191) NOT NULL,
+        \`email\` VARCHAR(191) NULL,
+        \`phone\` VARCHAR(191) NULL,
+        \`password\` VARCHAR(191) NULL,
+        \`role\` VARCHAR(191) NOT NULL DEFAULT 'CUSTOMER',
+        \`avatarUrl\` LONGTEXT NULL,
+        \`isVerified\` BOOLEAN NOT NULL DEFAULT false,
+        \`address\` TEXT NULL,
+        \`city\` VARCHAR(191) NULL,
+        \`pincode\` VARCHAR(191) NULL,
+        \`state\` VARCHAR(191) NULL,
+        \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+        \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        UNIQUE KEY \`User_email_key\` (\`email\`),
+        UNIQUE KEY \`User_phone_key\` (\`phone\`),
+        PRIMARY KEY (\`id\`)
+      ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    `);
+
+    // Ensure columns exist if table was previously created with fewer columns
+    const columns = [
+      "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `avatarUrl` LONGTEXT NULL;",
+      "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `isVerified` BOOLEAN NOT NULL DEFAULT false;",
+      "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `role` VARCHAR(191) NOT NULL DEFAULT 'CUSTOMER';",
+      "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `address` TEXT NULL;",
+      "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `city` VARCHAR(191) NULL;",
+      "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `pincode` VARCHAR(191) NULL;",
+      "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `state` VARCHAR(191) NULL;",
+    ];
+    for (const colSql of columns) {
+      try {
+        await prisma.$executeRawUnsafe(colSql);
+      } catch {}
+    }
+  } catch (err) {
+    console.error("ensureUserTable error:", err);
+  }
+}
+
 export async function ensureHappyCustomerTable() {
   try {
     await prisma.$executeRawUnsafe(`
@@ -24,7 +68,6 @@ export async function ensureHappyCustomerTable() {
       ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     `);
 
-    // Ensure columns exist if table was previously created with fewer columns
     const columns = [
       "ALTER TABLE `HappyCustomer` ADD COLUMN IF NOT EXISTS `village` TEXT NULL;",
       "ALTER TABLE `HappyCustomer` ADD COLUMN IF NOT EXISTS `district` VARCHAR(191) NULL DEFAULT 'Jalna';",
@@ -35,32 +78,8 @@ export async function ensureHappyCustomerTable() {
         await prisma.$executeRawUnsafe(colSql);
       } catch {}
     }
-  } catch {
-    // Postgres fallback
-    try {
-      await prisma.$executeRawUnsafe(`
-        CREATE TABLE IF NOT EXISTS "HappyCustomer" (
-          "id" TEXT NOT NULL PRIMARY KEY,
-          "name" TEXT NOT NULL,
-          "city" TEXT NOT NULL DEFAULT 'Pune',
-          "village" TEXT,
-          "district" TEXT DEFAULT 'Jalna',
-          "phone" TEXT,
-          "productName" TEXT NOT NULL DEFAULT 'Custom PC',
-          "photoUrl" TEXT,
-          "review" TEXT,
-          "rating" INTEGER NOT NULL DEFAULT 5,
-          "purchaseDate" TEXT DEFAULT 'Sept 2026',
-          "isFeatured" BOOLEAN NOT NULL DEFAULT true,
-          "isActive" BOOLEAN NOT NULL DEFAULT true,
-          "order" INTEGER NOT NULL DEFAULT 0,
-          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );
-      `);
-    } catch (pgErr) {
-      console.error("ensureHappyCustomerTable postgres error:", pgErr);
-    }
+  } catch (err) {
+    console.error("ensureHappyCustomerTable error:", err);
   }
 }
 
@@ -309,6 +328,8 @@ export async function ensureAllTables() {
       \`phone\` VARCHAR(191) NULL,
       \`password\` VARCHAR(191) NULL,
       \`role\` VARCHAR(191) NOT NULL DEFAULT 'CUSTOMER',
+      \`avatarUrl\` LONGTEXT NULL,
+      \`isVerified\` BOOLEAN NOT NULL DEFAULT false,
       \`address\` TEXT NULL,
       \`city\` VARCHAR(191) NULL,
       \`pincode\` VARCHAR(191) NULL,
@@ -325,20 +346,27 @@ export async function ensureAllTables() {
       \`id\` VARCHAR(191) NOT NULL,
       \`orderNumber\` VARCHAR(191) NOT NULL,
       \`customerName\` VARCHAR(191) NOT NULL,
-      \`customerPhone\` VARCHAR(191) NOT NULL,
+      \`customerPhone\` VARCHAR(191) NULL,
+      \`phone\` VARCHAR(191) NULL,
       \`customerEmail\` VARCHAR(191) NULL,
-      \`shippingAddress\` TEXT NOT NULL,
+      \`email\` VARCHAR(191) NULL,
+      \`shippingAddress\` TEXT NULL,
       \`billingAddress\` TEXT NULL,
+      \`address\` TEXT NULL,
       \`city\` VARCHAR(191) NOT NULL DEFAULT 'Jafrabad',
       \`pincode\` VARCHAR(191) NOT NULL DEFAULT '431206',
       \`state\` VARCHAR(191) NOT NULL DEFAULT 'Maharashtra',
-      \`subtotal\` DOUBLE NOT NULL,
+      \`subtotal\` DOUBLE NOT NULL DEFAULT 0,
       \`discount\` DOUBLE NOT NULL DEFAULT 0,
       \`deliveryCharge\` DOUBLE NOT NULL DEFAULT 0,
-      \`totalAmount\` DOUBLE NOT NULL,
-      \`paymentMethod\` VARCHAR(191) NOT NULL DEFAULT 'COD',
+      \`tax\` DOUBLE NOT NULL DEFAULT 0,
+      \`totalAmount\` DOUBLE NULL,
+      \`total\` DOUBLE NOT NULL DEFAULT 0,
+      \`paymentMethod\` VARCHAR(191) NULL DEFAULT 'COD',
+      \`paymentMode\` VARCHAR(191) NULL DEFAULT 'CASH_ON_DELIVERY',
       \`paymentStatus\` VARCHAR(191) NOT NULL DEFAULT 'PENDING',
-      \`orderStatus\` VARCHAR(191) NOT NULL DEFAULT 'PROCESSING',
+      \`orderStatus\` VARCHAR(191) NULL DEFAULT 'PROCESSING',
+      \`status\` VARCHAR(191) NOT NULL DEFAULT 'PENDING',
       \`trackingNumber\` VARCHAR(191) NULL,
       \`courierPartner\` VARCHAR(191) NULL,
       \`notes\` TEXT NULL,
@@ -355,11 +383,12 @@ export async function ensureAllTables() {
     `CREATE TABLE IF NOT EXISTS \`OrderItem\` (
       \`id\` VARCHAR(191) NOT NULL,
       \`orderId\` VARCHAR(191) NOT NULL,
-      \`productId\` VARCHAR(191) NOT NULL,
-      \`productName\` VARCHAR(191) NOT NULL,
-      \`price\` DOUBLE NOT NULL,
+      \`productId\` VARCHAR(191) NULL,
+      \`name\` VARCHAR(191) NULL,
+      \`productName\` VARCHAR(191) NULL,
+      \`price\` DOUBLE NOT NULL DEFAULT 0,
       \`quantity\` INT NOT NULL DEFAULT 1,
-      \`total\` DOUBLE NOT NULL,
+      \`total\` DOUBLE NULL,
       \`specsJson\` TEXT NULL,
       \`warranty\` VARCHAR(191) NULL,
       PRIMARY KEY (\`id\`)
@@ -430,6 +459,34 @@ export async function ensureAllTables() {
       console.warn(`Table sync error on ${tableName}:`, e?.message);
       results.push({ table: tableName, status: `error: ${e?.message}` });
     }
+  }
+
+  // Ensure individual columns for any tables that existed prior
+  const alterQueries = [
+    "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `avatarUrl` LONGTEXT NULL;",
+    "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `isVerified` BOOLEAN NOT NULL DEFAULT false;",
+    "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `role` VARCHAR(191) NOT NULL DEFAULT 'CUSTOMER';",
+    "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `address` TEXT NULL;",
+    "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `city` VARCHAR(191) NULL;",
+    "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `pincode` VARCHAR(191) NULL;",
+    "ALTER TABLE `User` ADD COLUMN IF NOT EXISTS `state` VARCHAR(191) NULL;",
+    "ALTER TABLE `HappyCustomer` ADD COLUMN IF NOT EXISTS `village` TEXT NULL;",
+    "ALTER TABLE `HappyCustomer` ADD COLUMN IF NOT EXISTS `district` VARCHAR(191) NULL DEFAULT 'Jalna';",
+    "ALTER TABLE `HappyCustomer` ADD COLUMN IF NOT EXISTS `phone` VARCHAR(191) NULL;",
+    "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `phone` VARCHAR(191) NULL;",
+    "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `email` VARCHAR(191) NULL;",
+    "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `address` TEXT NULL;",
+    "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `tax` DOUBLE NOT NULL DEFAULT 0;",
+    "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `total` DOUBLE NOT NULL DEFAULT 0;",
+    "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `paymentMode` VARCHAR(191) NULL DEFAULT 'CASH_ON_DELIVERY';",
+    "ALTER TABLE `Order` ADD COLUMN IF NOT EXISTS `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING';",
+    "ALTER TABLE `OrderItem` ADD COLUMN IF NOT EXISTS `name` VARCHAR(191) NULL;",
+  ];
+
+  for (const alt of alterQueries) {
+    try {
+      await prisma.$executeRawUnsafe(alt);
+    } catch {}
   }
 
   // Ensure default website setting exists

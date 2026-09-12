@@ -79,23 +79,42 @@ export async function POST(req: Request) {
     }
 
     // Create user with secure bcrypt hash
-    const newUser = await prisma.user.create({
-      data: {
-        name: name.trim(),
-        email: cleanEmail,
-        phone: cleanPhone,
-        password: hashPassword(password),
-        isVerified: true,
-      },
-    });
+    let newUser;
+    const userData = {
+      name: name.trim(),
+      email: cleanEmail,
+      phone: cleanPhone,
+      password: hashPassword(password),
+      isVerified: true,
+    };
+
+    try {
+      newUser = await prisma.user.create({ data: userData });
+    } catch (dbErr: any) {
+      if (dbErr?.message?.includes("does not exist") || dbErr?.message?.includes("Unknown argument") || dbErr?.code === "P2021") {
+        const { ensureUserTable } = await import("@/lib/db-tables");
+        await ensureUserTable();
+        // Fallback create without isVerified if legacy schema
+        newUser = await prisma.user.create({
+          data: {
+            name: name.trim(),
+            email: cleanEmail,
+            phone: cleanPhone,
+            password: hashPassword(password),
+          },
+        });
+      } else {
+        throw dbErr;
+      }
+    }
 
     const safeUser = {
       id: newUser.id,
       name: newUser.name,
       email: newUser.email,
       phone: newUser.phone,
-      isVerified: newUser.isVerified,
-      avatarUrl: newUser.avatarUrl,
+      isVerified: (newUser as any).isVerified ?? true,
+      avatarUrl: (newUser as any).avatarUrl,
       address: newUser.address,
       city: newUser.city,
       pincode: newUser.pincode,

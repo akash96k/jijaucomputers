@@ -216,40 +216,49 @@ model Enquiry {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  name      String
-  email     String?   @unique
-  phone     String?   @unique
-  password  String?
-  role      String    @default("CUSTOMER") // CUSTOMER, ADMIN
-  address   String?   @db.Text
-  city      String?
-  pincode   String?
-  state     String?
-  orders    Order[]
-  reviews   Review[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         String    @id @default(cuid())
+  name       String
+  email      String?   @unique
+  phone      String?   @unique
+  password   String?
+  role       String    @default("CUSTOMER") // CUSTOMER, ADMIN
+  avatarUrl  String?   @db.LongText
+  isVerified Boolean   @default(false)
+  address    String?   @db.Text
+  city       String?
+  pincode    String?
+  state      String?
+  orders     Order[]
+  reviews    Review[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }
 
 model Order {
   id              String      @id @default(cuid())
   orderNumber     String      @unique // e.g. JC-ORD-1001
   customerName    String
-  customerPhone   String
+  customerPhone   String?
+  phone           String?
   customerEmail   String?
-  shippingAddress String      @db.Text
+  email           String?
+  shippingAddress String?     @db.Text
   billingAddress  String?     @db.Text
+  address         String?     @db.Text
   city            String      @default("Jafrabad")
   pincode         String      @default("431206")
   state           String      @default("Maharashtra")
-  subtotal        Float
+  subtotal        Float       @default(0)
   discount        Float       @default(0)
   deliveryCharge  Float       @default(0)
-  totalAmount     Float
-  paymentMethod   String      @default("COD") // COD, UPI, BANK_TRANSFER
+  tax             Float       @default(0)
+  totalAmount     Float?
+  total           Float       @default(0)
+  paymentMethod   String?     @default("COD") // COD, UPI, BANK_TRANSFER
+  paymentMode     String?     @default("CASH_ON_DELIVERY")
   paymentStatus   String      @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
-  orderStatus     String      @default("PROCESSING") // PROCESSING, CONFIRMED, PACKED, DISPATCHED, DELIVERED, CANCELLED
+  orderStatus     String?     @default("PROCESSING") // PROCESSING, CONFIRMED, PACKED, DISPATCHED, DELIVERED, CANCELLED
+  status          String      @default("PENDING")
   trackingNumber  String?
   courierPartner  String?
   notes           String?     @db.Text
@@ -266,12 +275,13 @@ model OrderItem {
   id          String   @id @default(cuid())
   orderId     String
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
-  productName String
-  price       Float
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  name        String?
+  productName String?
+  price       Float    @default(0)
   quantity    Int      @default(1)
-  total       Float
+  total       Float?
   specsJson   String?  @db.Text // Snapshot of specs at purchase
   warranty    String?
 }
