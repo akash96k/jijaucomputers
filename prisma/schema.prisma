@@ -1,7 +1,6 @@
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -9,36 +8,36 @@ generator client {
 }
 
 model WebsiteSetting {
-  id              String   @id @default("default")
-  storeName       String   @default("Jijau Computers")
-  tagline         String   @default("Your Tech Partner")
-  logoUrl         String   @default("")
-  darkLogoUrl     String   @default("")
-  faviconUrl      String   @default("")
-  primaryColor    String   @default("#1d4ed8") // Indigo/Blue
-  secondaryColor  String   @default("#f97316") // Orange accent
-  phone           String   @default("+91 88056 07908")
-  whatsapp        String   @default("918805607908")
-  email           String   @default("sales@jijaucomputers.in")
-  address         String   @default("Jijau Computer Sales & Service, Opposite SBI Bank, Main Road, Jafrabad, Maharashtra - 431206")
-  googleMapsUrl   String   @default("https://maps.app.goo.gl/UjCXouqaC9ufVJNTA")
-  openingHours    String   @default("Mon - Sat: 10:00 AM - 9:00 PM | Sun: 11:00 AM - 6:00 PM")
-  gstin           String   @default("27AAAAA0000A1Z5")
-  upiId           String   @default("jijauc@ibl")
-  upiName         String   @default("Jijau Computers")
-  facebookUrl     String   @default("https://facebook.com/jijaucomputers")
-  instagramUrl    String   @default("https://www.instagram.com/jijau_computers_jafrabad")
-  youtubeUrl      String   @default("https://www.youtube.com/@Pavan_Kad_JAFRBAD")
-  linkedinUrl     String   @default("https://linkedin.com/company/jijaucomputers")
-  metaTitle       String   @default("Jijau Computers - Best Computer & Laptop Store")
-  metaDescription String   @default("Shop high performance gaming PCs, laptops, components, CCTV, and get quick repair services at Jijau Computers.")
-  metaKeywords    String   @default("computer store, gaming pc, laptops, pc repair, processors, graphics card, jijau computers")
+  id                 String   @id @default("default")
+  storeName          String   @default("Jijau Computers")
+  tagline            String   @default("Your Tech Partner")
+  logoUrl            String   @default("") @db.Text
+  darkLogoUrl        String   @default("") @db.Text
+  faviconUrl         String   @default("") @db.Text
+  primaryColor       String   @default("#1d4ed8") // Indigo/Blue
+  secondaryColor     String   @default("#f97316") // Orange accent
+  phone              String   @default("+91 88056 07908")
+  whatsapp           String   @default("918805607908")
+  email              String   @default("sales@jijaucomputers.in")
+  address            String   @default("Jijau Computer Sales & Service, Opposite SBI Bank, Main Road, Jafrabad, Maharashtra - 431206") @db.Text
+  googleMapsUrl      String   @default("https://maps.app.goo.gl/UjCXouqaC9ufVJNTA") @db.Text
+  openingHours       String   @default("Mon - Sat: 10:00 AM - 9:00 PM | Sun: 11:00 AM - 6:00 PM")
+  gstin              String   @default("27AAAAA0000A1Z5")
+  upiId              String   @default("jijauc@ibl")
+  upiName            String   @default("Jijau Computers")
+  facebookUrl        String   @default("https://facebook.com/jijaucomputers") @db.Text
+  instagramUrl       String   @default("https://www.instagram.com/jijau_computers_jafrabad") @db.Text
+  youtubeUrl         String   @default("https://www.youtube.com/@Pavan_Kad_JAFRBAD") @db.Text
+  linkedinUrl        String   @default("https://linkedin.com/company/jijaucomputers") @db.Text
+  metaTitle          String   @default("Jijau Computers - Best Computer & Laptop Store")
+  metaDescription    String   @default("Shop high performance gaming PCs, laptops, components, CCTV, and get quick repair services at Jijau Computers.") @db.Text
+  metaKeywords       String   @default("computer store, gaming pc, laptops, pc repair, processors, graphics card, jijau computers") @db.Text
   sliderInterval     Int      @default(5) // Default auto-slider interval in seconds
-  branchesJson       String?  @default("[]") // JSON array of multiple branches
-  invoiceTerms       String   @default("1. Warranty valid only with official serial number and intact warranty seals.\n2. Goods once sold are subject to manufacturer standard warranty policy.\n3. Physical damage, liquid spillage, or unauthorized modifications are not covered under warranty.\n4. Disputes subject to legal jurisdiction only.")
-  invoiceBankDetails String   @default("Bank: HDFC Bank Ltd | A/C No: 50200012345678 | IFSC: HDFC0001234 | Branch: Jafrabad")
+  branchesJson       String?  @default("[]") @db.Text // JSON array of multiple branches
+  invoiceTerms       String   @default("1. Warranty valid only with official serial number and intact warranty seals.\n2. Goods once sold are subject to manufacturer standard warranty policy.\n3. Physical damage, liquid spillage, or unauthorized modifications are not covered under warranty.\n4. Disputes subject to legal jurisdiction only.") @db.Text
+  invoiceBankDetails String   @default("Bank: HDFC Bank Ltd | A/C No: 50200012345678 | IFSC: HDFC0001234 | Branch: Jafrabad") @db.Text
   invoiceHsnCode     String   @default("84713010")
-  invoiceNotes       String   @default("Thank you for choosing Jijau Computers - Your Trusted Tech Partner!")
+  invoiceNotes       String   @default("Thank you for choosing Jijau Computers - Your Trusted Tech Partner!") @db.Text
   updatedAt          DateTime @updatedAt
 }
 
@@ -57,8 +56,8 @@ model Category {
   id          String    @id @default(cuid())
   name        String    @unique
   slug        String    @unique
-  description String?
-  imageUrl    String?
+  description String?   @db.Text
+  imageUrl    String?   @db.Text
   iconName    String?   @default("Monitor")
   order       Int       @default(0)
   isActive    Boolean   @default(true)
@@ -71,7 +70,7 @@ model Brand {
   id        String    @id @default(cuid())
   name      String    @unique
   slug      String    @unique
-  logoUrl   String?
+  logoUrl   String?   @db.Text
   isActive  Boolean   @default(true)
   products  Product[]
   createdAt DateTime  @default(now())
@@ -83,8 +82,8 @@ model Product {
   name          String
   slug          String         @unique
   sku           String?        @unique
-  description   String
-  shortDesc     String?
+  description   String         @db.Text
+  shortDesc     String?        @db.Text
   price         Float
   salePrice     Float?
   stock         Int            @default(10)
@@ -95,9 +94,9 @@ model Product {
   isNewArrival  Boolean        @default(false)
   isTrending    Boolean        @default(false)
   isGamingDeal  Boolean        @default(false)
-  videoUrl      String?        // Multiple URLs can be stored (comma/newline separated)
+  videoUrl      String?        @db.Text // Multiple URLs can be stored (comma/newline separated)
   sliderSeconds Int?           @default(5) // Auto-slider time in seconds (default 5s)
-  specsJson     String?        // JSON string of key-value specs
+  specsJson     String?        @db.Text // JSON string of key-value specs
   categoryId    String
   category      Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   brandId       String?
@@ -111,7 +110,7 @@ model Product {
 
 model ProductImage {
   id        String   @id @default(cuid())
-  url       String
+  url       String   @db.LongText
   isPrimary Boolean  @default(false)
   order     Int      @default(0)
   productId String
@@ -122,8 +121,8 @@ model Offer {
   id            String    @id @default(cuid())
   title         String
   badge         String?   @default("FESTIVE DEAL")
-  description   String
-  bannerUrl     String?
+  description   String    @db.Text
+  bannerUrl     String?   @db.Text
   discountPct   Int?      @default(15)
   couponCode    String?
   startDate     DateTime?
@@ -136,9 +135,9 @@ model Offer {
 model Banner {
   id          String   @id @default(cuid())
   title       String
-  subtitle    String?
+  subtitle    String?  @db.Text
   tag         String?  @default("Special Promotion")
-  imageUrl    String
+  imageUrl    String   @db.LongText
   ctaText     String?  @default("Explore Now")
   ctaLink     String?  @default("/products")
   order       Int      @default(0)
@@ -148,42 +147,42 @@ model Banner {
 }
 
 model CustomPcRequest {
-  id          String   @id @default(cuid())
-  reqNumber   String   @unique
+  id           String   @id @default(cuid())
+  reqNumber    String   @unique
   customerName String
-  phone       String
-  email       String?
-  budget      String
-  purpose     String   // Gaming, Office, Video Editing, AI/ML, Programming, etc.
-  cpuPref     String?
-  gpuPref     String?
-  ramPref     String?
-  storagePref String?
-  cabinetPref String?
-  notes       String?
-  status      String   @default("PENDING") // PENDING, REVIEWING, QUOTED, ACCEPTED, COMPLETED, CANCELLED
-  adminNotes  String?
-  totalEst    Float?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  phone        String
+  email        String?
+  budget       String
+  purpose      String   // Gaming, Office, Video Editing, AI/ML, Programming, etc.
+  cpuPref      String?
+  gpuPref      String?
+  ramPref      String?
+  storagePref  String?
+  cabinetPref  String?
+  notes        String?  @db.Text
+  status       String   @default("PENDING") // PENDING, REVIEWING, QUOTED, ACCEPTED, COMPLETED, CANCELLED
+  adminNotes   String?  @db.Text
+  totalEst     Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model ServiceRequest {
-  id          String   @id @default(cuid())
-  ticketId    String   @unique // e.g. JC-SRV-1001
-  customerName String
-  phone       String
-  email       String?
-  deviceType  String   // Laptop, Desktop, Printer, Motherboard, GPU, CCTV, Other
-  brand       String
-  model       String
-  serialNo    String?
-  issueDesc   String
-  status      String   @default("Received") // Received, Under Inspection, Repairing, Waiting for Parts, Ready for Delivery, Completed
-  adminNotes  String?
+  id            String   @id @default(cuid())
+  ticketId      String   @unique // e.g. JC-SRV-1001
+  customerName  String
+  phone         String
+  email         String?
+  deviceType    String   // Laptop, Desktop, Printer, Motherboard, GPU, CCTV, Other
+  brand         String
+  model         String
+  serialNo      String?
+  issueDesc     String   @db.Text
+  status        String   @default("Received") // Received, Under Inspection, Repairing, Waiting for Parts, Ready for Delivery, Completed
+  adminNotes    String?  @db.Text
   estimatedCost Float?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model QuotationRequest {
@@ -194,10 +193,10 @@ model QuotationRequest {
   phone        String
   email        String
   type         String   @default("Bulk Order") // Single Product, Multi-Product, Bulk Order, Corporate B2B
-  itemsSummary String   // JSON or text description of requested items
-  message      String?
+  itemsSummary String   @db.Text // JSON or text description of requested items
+  message      String?  @db.Text
   status       String   @default("PENDING") // PENDING, PROCESSING, QUOTED, CLOSED
-  adminNotes   String?
+  adminNotes   String?  @db.Text
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -208,109 +207,116 @@ model Enquiry {
   phone       String
   email       String?
   subject     String
-  message     String
+  message     String   @db.Text
   productName String?
   status      String   @default("NEW") // NEW, CONTACTED, RESOLVED
-  adminNotes  String?
+  adminNotes  String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
 model User {
-  id         String   @id @default(cuid())
-  name       String
-  email      String   @unique
-  phone      String?  @unique
-  password   String
-  avatarUrl  String?
-  isVerified Boolean  @default(true)
-  address    String?
-  city       String?
-  pincode    String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  orders     Order[]
+  id        String    @id @default(cuid())
+  name      String
+  email     String?   @unique
+  phone     String?   @unique
+  password  String?
+  role      String    @default("CUSTOMER") // CUSTOMER, ADMIN
+  address   String?   @db.Text
+  city      String?
+  pincode   String?
+  state     String?
+  orders    Order[]
+  reviews   Review[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  orderNumber String      @unique
-  userId      String?
-  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  customerName String
-  phone       String
-  email       String?
-  address     String
-  city        String
-  pincode     String
-  notes       String?
-  items       OrderItem[]
-  subtotal    Float
-  discount    Float       @default(0)
-  tax         Float       @default(0)
-  total       Float
-  paymentMode String      @default("CASH_ON_DELIVERY") // COD, UPI_WHATSAPP, BANK_TRANSFER
-  status      String      @default("PENDING") // PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique // e.g. JC-ORD-1001
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  shippingAddress String      @db.Text
+  billingAddress  String?     @db.Text
+  city            String      @default("Jafrabad")
+  pincode         String      @default("431206")
+  state           String      @default("Maharashtra")
+  subtotal        Float
+  discount        Float       @default(0)
+  deliveryCharge  Float       @default(0)
+  totalAmount     Float
+  paymentMethod   String      @default("COD") // COD, UPI, BANK_TRANSFER
+  paymentStatus   String      @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  orderStatus     String      @default("PROCESSING") // PROCESSING, CONFIRMED, PACKED, DISPATCHED, DELIVERED, CANCELLED
+  trackingNumber  String?
+  courierPartner  String?
+  notes           String?     @db.Text
+  adminNotes      String?     @db.Text
+  gstDetails      String?     @db.Text // Optional Business GST & Company Name
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String?
-  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  name      String
-  price     Float
-  quantity  Int
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productName String
+  price       Float
+  quantity    Int      @default(1)
+  total       Float
+  specsJson   String?  @db.Text // Snapshot of specs at purchase
+  warranty    String?
 }
 
 model VisitorLog {
   id        String   @id @default(cuid())
   ip        String
-  location  String?  @default("Maharashtra, India")
-  device    String?  @default("Desktop")
-  browser   String?  @default("Chrome")
-  os        String?  @default("Windows")
-  page      String   @default("/")
-  referrer  String?  @default("—")
-  userAgent String?
+  page      String
+  referrer  String?  @db.Text
+  city      String?
+  state     String?
+  country   String?  @default("India")
+  device    String?  // Desktop, Mobile, Tablet
+  browser   String?
+  userAgent String?  @db.Text
   createdAt DateTime @default(now())
 }
 
 model Review {
-  id              String   @id @default(cuid())
-  productId       String
-  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  userId          String?
-  customerName    String
-  customerPhone   String?
-  rating          Int      @default(5) // 1 to 5 stars
-  title           String
-  comment         String
-  isVerifiedBuyer Boolean  @default(false)
-  isApproved      Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  authorName  String
+  rating      Int      @default(5)
+  title       String?
+  comment     String   @db.Text
+  isVerified  Boolean  @default(false)
+  isApproved  Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }
 
 model HappyCustomer {
-  id           String   @id @default(cuid())
-  name         String
-  city         String
-  village      String?
-  district     String   @default("Maharashtra")
-  phone        String?
-  productName  String
-  photoUrl     String
-  review       String?
-  rating       Int      @default(5)
-  purchaseDate String?
-  isFeatured   Boolean  @default(true)
-  isActive     Boolean  @default(true)
-  order        Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  city            String   @default("Pune")
+  productName     String   @default("Custom PC")
+  photoUrl        String?  @db.LongText
+  review          String?  @db.Text
+  rating          Int      @default(5)
+  purchaseDate    String?  @default("Sept 2026")
+  isFeatured      Boolean  @default(true)
+  isActive        Boolean  @default(true)
+  order           Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
-
