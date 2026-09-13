@@ -200,7 +200,10 @@ export async function GET() {
           const productPayload = {
             name: rawProductData.name,
             slug: rawProductData.slug,
-            sku: rawProductData.sku ?? "",
+            sku:
+              rawProductData.sku && String(rawProductData.sku).trim() !== ""
+                ? String(rawProductData.sku).trim()
+                : null,
             description: rawProductData.description ?? "",
             shortDesc: rawProductData.shortDesc ?? "",
             price: Number(rawProductData.price) || 0,
@@ -338,11 +341,13 @@ export async function GET() {
     if (data.user && data.user.length > 0) {
       for (const u of data.user) {
         try {
+          const userPhone =
+            u.phone && String(u.phone).trim() !== "" ? String(u.phone).trim() : null;
           await prisma.user.upsert({
             where: { email: u.email },
             update: {
               name: u.name,
-              phone: u.phone,
+              phone: userPhone,
               role: u.role,
               address: u.address,
               city: u.city,
@@ -353,7 +358,7 @@ export async function GET() {
               id: u.id,
               name: u.name,
               email: u.email,
-              phone: u.phone,
+              phone: userPhone,
               password: u.password,
               role: u.role,
               address: u.address,

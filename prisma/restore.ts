@@ -157,7 +157,10 @@ async function restore() {
       const productPayload = {
         name: rawProductData.name,
         slug: rawProductData.slug,
-        sku: rawProductData.sku ?? "",
+        sku:
+          rawProductData.sku && String(rawProductData.sku).trim() !== ""
+            ? String(rawProductData.sku).trim()
+            : null,
         description: rawProductData.description ?? "",
         shortDesc: rawProductData.shortDesc ?? "",
         price: Number(rawProductData.price) || 0,
@@ -275,11 +278,13 @@ async function restore() {
   // 10. Users
   if (data.user && data.user.length > 0) {
     for (const u of data.user) {
+      const userPhone =
+        u.phone && String(u.phone).trim() !== "" ? String(u.phone).trim() : null;
       await prisma.user.upsert({
         where: { email: u.email },
         update: {
           name: u.name,
-          phone: u.phone,
+          phone: userPhone,
           role: u.role,
           address: u.address,
           city: u.city,
@@ -290,7 +295,7 @@ async function restore() {
           id: u.id,
           name: u.name,
           email: u.email,
-          phone: u.phone,
+          phone: userPhone,
           password: u.password,
           role: u.role,
           address: u.address,
