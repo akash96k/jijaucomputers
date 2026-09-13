@@ -6,7 +6,7 @@ import WhatsAppFloating from "@/components/layout/WhatsAppFloating";
 import CartDrawer from "@/components/layout/CartDrawer";
 import DevicesClient from "./DevicesClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata = {
   title: "Device & Brand Hub - Laptops, Mobiles, Printers & CCTV | Jijau Computers",

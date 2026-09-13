@@ -8,24 +8,35 @@ import CartDrawer from "@/components/layout/CartDrawer";
 import ProductCard from "@/components/products/ProductCard";
 import OffersClient from "./OffersClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function OffersPage() {
-  const [offers, gamingDeals, laptopsOnSale] = await Promise.all([
-    prisma.offer.findMany({
-      where: { isActive: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.product.findMany({
-      where: { isGamingDeal: true, inStock: true },
-      include: { category: true, brand: true, images: { orderBy: { order: "asc" } } },
-    }),
-    prisma.product.findMany({
-      where: { category: { slug: "laptops" }, inStock: true },
-      take: 4,
-      include: { category: true, brand: true, images: { orderBy: { order: "asc" } } },
-    }),
-  ]);
+  let offers: any[] = [];
+  let gamingDeals: any[] = [];
+  let laptopsOnSale: any[] = [];
+
+  try {
+    const res = await Promise.all([
+      prisma.offer.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.product.findMany({
+        where: { isGamingDeal: true, inStock: true },
+        include: { category: true, brand: true, images: { orderBy: { order: "asc" } } },
+      }),
+      prisma.product.findMany({
+        where: { category: { slug: "laptops" }, inStock: true },
+        take: 4,
+        include: { category: true, brand: true, images: { orderBy: { order: "asc" } } },
+      }),
+    ]);
+    offers = res[0] || [];
+    gamingDeals = res[1] || [];
+    laptopsOnSale = res[2] || [];
+  } catch (err) {
+    console.error("Offers page fetch error:", err);
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc]">

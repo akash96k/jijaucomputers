@@ -1,6 +1,6 @@
 import DevicesPage from "../devices/page";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata = {
   title: "Categories & Brand Explorer (Laptop, Mobile, Printer, CCTV Camera) | Jijau Computers",

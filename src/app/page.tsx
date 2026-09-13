@@ -15,7 +15,7 @@ import Footer from "@/components/layout/Footer";
 import WhatsAppFloating from "@/components/layout/WhatsAppFloating";
 import CartDrawer from "@/components/layout/CartDrawer";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // Cache and revalidate every 60 seconds
 
 export default async function HomePage() {
   let banners: any[] = [];
